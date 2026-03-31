@@ -1,0 +1,41 @@
+{
+  "uid": "ai-obs-accuracy",
+  "title": "AI Observability — Accuracy & Quality",
+  "tags": ["ai-obs"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "5m",
+  "time": {"from": "now-7d", "to": "now"},
+  "panels": [
+    {"id":1,"type":"gauge","title":"Overall Accuracy (7d)",
+     "gridPos":{"x":0,"y":0,"w":5,"h":8},
+     "datasource":{"uid":"aiobs-pg"},
+     "options":{"reduceOptions":{"calcs":["lastNotNull"]}},
+     "fieldConfig":{"defaults":{"min":0,"max":1,"decimals":3,"thresholds":{"steps":[{"color":"red","value":0},{"color":"yellow","value":0.6},{"color":"green","value":0.8}]}}},
+     "targets":[{"rawSql":"SELECT ROUND(AVG(score)::numeric,4) AS value FROM ai_scores WHERE created_at >= now() - INTERVAL '7 days'","format":"table"}]},
+
+    {"id":2,"type":"piechart","title":"Score label distribution",
+     "gridPos":{"x":5,"y":0,"w":8,"h":8},
+     "datasource":{"uid":"aiobs-pg"},
+     "targets":[{"rawSql":"SELECT COALESCE(label,'unlabelled') AS label, COUNT(*) AS count FROM ai_scores WHERE created_at >= now() - INTERVAL '7 days' GROUP BY 1 ORDER BY count DESC","format":"table"}]},
+
+    {"id":3,"type":"histogram","title":"Score distribution",
+     "gridPos":{"x":13,"y":0,"w":11,"h":8},
+     "datasource":{"uid":"aiobs-pg"},
+     "options":{"bucketSize":"auto","fillOpacity":60},
+     "targets":[{"rawSql":"SELECT score FROM ai_scores WHERE $__timeFilter(created_at)","format":"table"}]},
+
+    {"id":4,"type":"timeseries","title":"Daily accuracy — drift detection",
+     "description":"Watch for downward trends — they indicate model quality degradation.",
+     "gridPos":{"x":0,"y":8,"w":24,"h":9},
+     "datasource":{"uid":"aiobs-pg"},
+     "fieldConfig":{"defaults":{"min":0,"max":1,"custom":{"lineWidth":2,"fillOpacity":15},"thresholds":{"steps":[{"color":"red","value":0},{"color":"yellow","value":0.6},{"color":"green","value":0.8}]}}},
+     "targets":[{"rawSql":"SELECT DATE_TRUNC('day', created_at) AS time, ROUND(AVG(score)::numeric,4) AS avg_score, ROUND(MIN(score)::numeric,4) AS min_score, COUNT(*) AS samples FROM ai_scores WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 1","format":"table"}]},
+
+    {"id":5,"type":"table","title":"Low-scoring traces (score < 0.6) — review these",
+     "gridPos":{"x":0,"y":17,"w":24,"h":10},
+     "datasource":{"uid":"aiobs-pg"},
+     "options":{"sortBy":[{"displayName":"score","desc":false}]},
+     "targets":[{"rawSql":"SELECT s.created_at AS time, s.score, s.label, e.model, e.provider, e.endpoint, e.env, e.latency_ms, s.trace_id FROM ai_scores s LEFT JOIN ai_events e ON e.trace_id = s.trace_id WHERE s.score < 0.6 AND s.created_at >= now() - INTERVAL '7 days' ORDER BY s.score ASC LIMIT 100","format":"table"}]}
+  ]
+}

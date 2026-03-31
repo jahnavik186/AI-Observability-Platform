@@ -1,0 +1,178 @@
+version: "3.9"
+
+# ── ai-obs: Open AI Observability Platform ────────────────────────────────────
+#
+# Usage:
+#   cp .env.example .env
+#   docker compose up -d
+#
+# Services:
+#   collector  :8080   — telemetry ingest API + metrics query API
+#   grafana    :3000   — dashboards (admin / admin by default)
+#   postgres   :5432   — event storage (internal)
+#   redis      :6379   — real-time counters (internal)
+#   minio      :9001   — raw log archive console (optional)
+
+services:
+
+  # ── Collector ────────────────────────────────────────────────────────────────
+  collector:
+    build:
+      context: ./collector
+      dockerfile: Dockerfile
+      target: runtime
+    image: ${DOCKER_IMAGE:-yourdockerhub/ai-obs-collector}:${VERSION:-latest}
+    container_name: ai-obs-collector
+    restart: unless-stopped
+    ports:
+      - "${COLLECTOR_PORT:-8080}:8080"
+    environment:
+      DATABASE_URL:  postgresql+asyncpg://aiobs:${POSTGRES_PASSWORD:-aiobs}@postgres:5432/aiobs
+      REDIS_URL:     redis://redis:6379/0
+      MINIO_ENDPOINT:   minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET:     ai-obs-logs
+      API_KEY:       ${AI_OBS_API_KEY:-}
+      LOG_LEVEL:     ${LOG_LEVEL:-info}
+      WORKERS:       ${COLLECTOR_WORKERS:-2}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8080/v1/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - ai-obs-net
+    labels:
+      ai-obs.service: collector
+      ai-obs.version: "0.2.0"
+
+  # ── PostgreSQL ───────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: ai-obs-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       aiobs
+      POSTGRES_USER:     aiobs
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aiobs}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./storage/migrations/init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aiobs -d aiobs"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - ai-obs-net
+    # Tune for write-heavy observability workload
+    command: >
+      postgres
+        -c shared_buffers=256MB
+        -c effective_cache_size=512MB
+        -c max_connections=200
+        -c wal_level=replica
+        -c checkpoint_completion_target=0.9
+
+  # ── Redis ────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: ai-obs-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+        --maxmemory 256mb
+        --maxmemory-policy allkeys-lru
+        --save ""
+        --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - ai-obs-net
+
+  # ── MinIO ─────────────────────────────────────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: ai-obs-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER:     ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9001:9001"   # Web console — disable in production if not needed
+    networks:
+      - ai-obs-net
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: ai-obs-minio-init
+    depends_on: [minio]
+    entrypoint: >
+      /bin/sh -c "
+        sleep 5 &&
+        mc alias set local http://minio:9000 ${MINIO_ACCESS_KEY:-minioadmin} ${MINIO_SECRET_KEY:-minioadmin} &&
+        mc mb --ignore-existing local/ai-obs-logs &&
+        mc anonymous set none local/ai-obs-logs &&
+        echo 'MinIO bucket ready' &&
+        exit 0
+      "
+    networks:
+      - ai-obs-net
+
+  # ── Grafana ───────────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: ai-obs-grafana
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER:     ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP:     "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /etc/grafana/provisioning/dashboards/overview.json
+      # Pass Postgres password into Grafana provisioning
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aiobs}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./dashboard/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      collector:
+        condition: service_healthy
+    networks:
+      - ai-obs-net
+    labels:
+      ai-obs.service: grafana
+
+volumes:
+  postgres-data:
+    name: ai-obs-postgres-data
+  redis-data:
+    name: ai-obs-redis-data
+  minio-data:
+    name: ai-obs-minio-data
+  grafana-data:
+    name: ai-obs-grafana-data
+
+networks:
+  ai-obs-net:
+    name: ai-obs-network
+    driver: bridge

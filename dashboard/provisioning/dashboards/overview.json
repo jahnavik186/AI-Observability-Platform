@@ -1,0 +1,100 @@
+{
+  "uid": "ai-obs-overview",
+  "title": "AI Observability — Overview",
+  "description": "Global health across all providers, models, and environments.",
+  "tags": ["ai-obs"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "30s",
+  "time": {"from": "now-24h", "to": "now"},
+  "templating": {
+    "list": [
+      {
+        "name": "env", "type": "query", "label": "Environment",
+        "datasource": {"uid": "aiobs-pg"},
+        "query": "SELECT DISTINCT env FROM ai_events ORDER BY env",
+        "includeAll": true, "allValue": ".*", "multi": false,
+        "current": {"text": "All", "value": "$__all"}
+      }
+    ]
+  },
+  "panels": [
+    {"id":1,"type":"stat","title":"Total Requests","gridPos":{"x":0,"y":0,"w":4,"h":4},
+     "datasource":{"uid":"aiobs-pg"},
+     "options":{"colorMode":"background","graphMode":"area","reduceOptions":{"calcs":["lastNotNull"]}},
+     "fieldConfig":{"defaults":{"color":{"mode":"thresholds"},"thresholds":{"steps":[{"color":"blue","value":null}]}}},
+     "targets":[{"rawSql":"SELECT COUNT(*) AS value FROM ai_events WHERE created_at >= now() - INTERVAL '24 hours'","format":"table"}]},
+
+    {"id":2,"type":"stat","title":"Avg Latency","gridPos":{"x":4,"y":0,"w":4,"h":4},
+     "datasource":{"uid":"aiobs-pg"},
+     "options":{"colorMode":"background","reduceOptions":{"calcs":["lastNotNull"]}},
+     "fieldConfig":{"defaults":{"unit":"ms","color":{"mode":"thresholds"},"thresholds":{"steps":[{"color":"green","value":null},{"color":"yellow","value":500},{"color":"red","value":2000}]}}},
+     "targets":[{"rawSql":"SELECT ROUND(AVG(latency_ms)::numeric,1) AS value FROM ai_events WHERE created_at >= now() - INTERVAL '24 hours'","format":"table"}]},
+
+    {"id":3,"type":"stat","title":"p95 Latency","gridPos":{"x":8,"y":0,"w":4,"h":4},
+     "datasource":{"uid":"aiobs-pg"},
+     "options":{"colorMode":"background","reduceOptions":{"calcs":["lastNotNull"]}},
+     "fieldConfig":{"defaults":{"unit":"ms","color":{"mode":"thresholds"},"thresholds":{"steps":[{"color":"green","value":null},{"color":"yellow","value":1000},{"color":"red","value":4000}]}}},
+     "targets":[{"rawSql":"SELECT ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY latency_ms)::numeric,1) AS value FROM ai_events WHERE created_at >= now() - INTERVAL '24 hours'","format":"table"}]},
+
+    {"id":4,"type":"stat","title":"Total Cost (24h)","gridPos":{"x":12,"y":0,"w":4,"h":4},
+     "datasource":{"uid":"aiobs-pg"},
+     "options":{"colorMode":"background","reduceOptions":{"calcs":["lastNotNull"]}},
+     "fieldConfig":{"defaults":{"unit":"currencyUSD","decimals":4,"color":{"mode":"thresholds"},"thresholds":{"steps":[{"color":"green","value":null},{"color":"yellow","value":5},{"color":"red","value":50}]}}},
+     "targets":[{"rawSql":"SELECT ROUND(SUM(cost_usd)::numeric,4) AS value FROM ai_events WHERE created_at >= now() - INTERVAL '24 hours'","format":"table"}]},
+
+    {"id":5,"type":"stat","title":"Error Rate","gridPos":{"x":16,"y":0,"w":4,"h":4},
+     "datasource":{"uid":"aiobs-pg"},
+     "options":{"colorMode":"background","reduceOptions":{"calcs":["lastNotNull"]}},
+     "fieldConfig":{"defaults":{"unit":"percentunit","decimals":2,"color":{"mode":"thresholds"},"thresholds":{"steps":[{"color":"green","value":null},{"color":"yellow","value":0.02},{"color":"red","value":0.05}]}}},
+     "targets":[{"rawSql":"SELECT ROUND((COUNT(*) FILTER (WHERE error IS NOT NULL))::numeric / NULLIF(COUNT(*),0),4) AS value FROM ai_events WHERE created_at >= now() - INTERVAL '24 hours'","format":"table"}]},
+
+    {"id":6,"type":"stat","title":"Avg Accuracy Score","gridPos":{"x":20,"y":0,"w":4,"h":4},
+     "datasource":{"uid":"aiobs-pg"},
+     "options":{"colorMode":"background","reduceOptions":{"calcs":["lastNotNull"]}},
+     "fieldConfig":{"defaults":{"decimals":3,"color":{"mode":"thresholds"},"thresholds":{"steps":[{"color":"red","value":null},{"color":"yellow","value":0.6},{"color":"green","value":0.8}]}}},
+     "targets":[{"rawSql":"SELECT ROUND(AVG(score)::numeric,3) AS value FROM ai_scores WHERE created_at >= now() - INTERVAL '24 hours'","format":"table"}]},
+
+    {"id":10,"type":"timeseries","title":"Requests per hour by provider",
+     "gridPos":{"x":0,"y":4,"w":12,"h":8},
+     "datasource":{"uid":"aiobs-pg"},
+     "fieldConfig":{"defaults":{"custom":{"lineWidth":2,"fillOpacity":15},"color":{"mode":"palette-classic"}}},
+     "options":{"tooltip":{"mode":"multi"}},
+     "targets":[{"rawSql":"SELECT DATE_TRUNC('hour', created_at) AS time, provider, COUNT(*) AS requests FROM ai_events WHERE $__timeFilter(created_at) GROUP BY 1,2 ORDER BY 1","format":"table"}]},
+
+    {"id":11,"type":"timeseries","title":"Latency percentiles (all models)",
+     "gridPos":{"x":12,"y":4,"w":12,"h":8},
+     "datasource":{"uid":"aiobs-pg"},
+     "fieldConfig":{"defaults":{"unit":"ms","custom":{"lineWidth":2,"fillOpacity":8},"color":{"mode":"palette-classic"}}},
+     "targets":[{"rawSql":"SELECT DATE_TRUNC('hour', created_at) AS time, 'p50' AS pct, PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY latency_ms) AS latency FROM ai_events WHERE $__timeFilter(created_at) GROUP BY 1 UNION ALL SELECT DATE_TRUNC('hour', created_at), 'p95', PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY latency_ms) FROM ai_events WHERE $__timeFilter(created_at) GROUP BY 1 UNION ALL SELECT DATE_TRUNC('hour', created_at), 'p99', PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY latency_ms) FROM ai_events WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 1","format":"table"}]},
+
+    {"id":12,"type":"timeseries","title":"Cumulative cost (USD) per model",
+     "gridPos":{"x":0,"y":12,"w":12,"h":8},
+     "datasource":{"uid":"aiobs-pg"},
+     "fieldConfig":{"defaults":{"unit":"currencyUSD","decimals":4,"custom":{"lineWidth":2,"fillOpacity":20},"color":{"mode":"palette-classic"}}},
+     "targets":[{"rawSql":"SELECT DATE_TRUNC('hour', created_at) AS time, model, ROUND(SUM(cost_usd)::numeric,6) AS cost FROM ai_events WHERE $__timeFilter(created_at) GROUP BY 1,2 ORDER BY 1","format":"table"}]},
+
+    {"id":13,"type":"timeseries","title":"Accuracy score trend (daily avg)",
+     "gridPos":{"x":12,"y":12,"w":12,"h":8},
+     "datasource":{"uid":"aiobs-pg"},
+     "fieldConfig":{"defaults":{"min":0,"max":1,"custom":{"lineWidth":2,"fillOpacity":12},"thresholds":{"steps":[{"color":"red","value":0},{"color":"yellow","value":0.6},{"color":"green","value":0.8}]}}},
+     "targets":[{"rawSql":"SELECT DATE_TRUNC('day', created_at) AS time, ROUND(AVG(score)::numeric,4) AS avg_score, COUNT(*) AS samples FROM ai_scores WHERE $__timeFilter(created_at) GROUP BY 1 ORDER BY 1","format":"table"}]},
+
+    {"id":20,"type":"table","title":"Model performance breakdown",
+     "gridPos":{"x":0,"y":20,"w":24,"h":10},
+     "datasource":{"uid":"aiobs-pg"},
+     "options":{"sortBy":[{"displayName":"requests","desc":true}]},
+     "fieldConfig":{"overrides":[
+       {"matcher":{"id":"byName","options":"p95_ms"},"properties":[{"id":"unit","value":"ms"}]},
+       {"matcher":{"id":"byName","options":"p99_ms"},"properties":[{"id":"unit","value":"ms"}]},
+       {"matcher":{"id":"byName","options":"avg_ms"},"properties":[{"id":"unit","value":"ms"}]},
+       {"matcher":{"id":"byName","options":"total_cost_usd"},"properties":[{"id":"unit","value":"currencyUSD"},{"id":"decimals","value":4}]},
+       {"matcher":{"id":"byName","options":"error_rate"},"properties":[
+         {"id":"unit","value":"percentunit"},{"id":"decimals","value":2},
+         {"id":"custom.displayMode","value":"color-background"},
+         {"id":"thresholds","value":{"steps":[{"color":"green","value":null},{"color":"yellow","value":0.02},{"color":"red","value":0.05}]}}
+       ]}
+     ]},
+     "targets":[{"rawSql":"SELECT provider, model, env, COUNT(*) AS requests, ROUND(AVG(latency_ms)::numeric,1) AS avg_ms, ROUND(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY latency_ms)::numeric,1) AS p95_ms, ROUND(PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY latency_ms)::numeric,1) AS p99_ms, SUM(total_tokens) AS total_tokens, ROUND(SUM(cost_usd)::numeric,4) AS total_cost_usd, ROUND((COUNT(*) FILTER (WHERE error IS NOT NULL))::numeric/NULLIF(COUNT(*),0),4) AS error_rate FROM ai_events WHERE $__timeFilter(created_at) GROUP BY provider,model,env ORDER BY requests DESC","format":"table"}]}
+  ]
+}

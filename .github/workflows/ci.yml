@@ -1,0 +1,177 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  # ── SDK tests ────────────────────────────────────────────────────────────────
+  sdk-tests:
+    name: "SDK — Python ${{ matrix.python-version }}"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    defaults:
+      run:
+        working-directory: sdk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check ai_obs/
+      - name: Test
+        run: pytest tests/ -v --tb=short
+
+  # ── Collector lint ────────────────────────────────────────────────────────────
+  collector-lint:
+    name: Collector lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: collector
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check app/
+
+  # ── Docker build ──────────────────────────────────────────────────────────────
+  docker-build:
+    name: Docker build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build collector image
+        run: docker build -t ai-obs-collector:ci ./collector
+      - name: Validate compose file
+        run: docker compose config --quiet
+
+  # ── Integration test ──────────────────────────────────────────────────────────
+  integration:
+    name: Integration — full stack smoke test
+    runs-on: ubuntu-latest
+    needs: [sdk-tests, collector-lint, docker-build]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare env
+        run: cp .env.example .env
+      - name: Start stack
+        run: docker compose up -d --wait --wait-timeout 90
+      - name: Wait for collector
+        run: |
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:8080/v1/health && echo " ✓ collector healthy" && break
+            echo "  waiting ($i/15)..."
+            sleep 4
+          done
+      - name: Readiness check
+        run: curl -sf http://localhost:8080/v1/health/ready | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['status']=='ready', d"
+      - name: Grafana health
+        run: curl -sf http://admin:admin@localhost:3000/api/health
+      - name: Send events batch
+        run: |
+          curl -sf -X POST http://localhost:8080/v1/events \
+            -H "Content-Type: application/json" \
+            -d '{
+              "events": [
+                {
+                  "trace_id": "ci-test-001",
+                  "model": "gpt-4o",
+                  "provider": "openai",
+                  "endpoint": "ci-test",
+                  "env": "ci",
+                  "latency_ms": 312.5,
+                  "prompt_tokens": 50,
+                  "completion_tokens": 100,
+                  "total_tokens": 150,
+                  "cost_usd": 0.0018
+                },
+                {
+                  "trace_id": "ci-test-002",
+                  "model": "claude-sonnet-4-6",
+                  "provider": "anthropic",
+                  "endpoint": "ci-test",
+                  "env": "ci",
+                  "latency_ms": 487.0,
+                  "prompt_tokens": 80,
+                  "completion_tokens": 200,
+                  "total_tokens": 280,
+                  "cost_usd": 0.0032
+                }
+              ]
+            }' | python3 -c "import sys,json; d=json.load(sys.stdin); assert d['accepted']==2, d"
+      - name: Post accuracy score
+        run: |
+          curl -sf -X POST http://localhost:8080/v1/score \
+            -H "Content-Type: application/json" \
+            -d '{"trace_id":"ci-test-001","score":0.95,"label":"correct","env":"ci"}'
+      - name: Query metrics summary
+        run: |
+          curl -sf "http://localhost:8080/v1/metrics/summary?window_hours=1" \
+            | python3 -c "import sys,json; d=json.load(sys.stdin); print('metrics OK:', d.get('total_requests'), 'requests')"
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
+
+  # ── Publish to PyPI (on release) ─────────────────────────────────────────────
+  publish-sdk:
+    name: Publish SDK to PyPI
+    runs-on: ubuntu-latest
+    needs: [integration]
+    if: github.event_name == 'release'
+    defaults:
+      run:
+        working-directory: sdk
+    environment:
+      name: pypi
+      url: https://pypi.org/project/ai-obs-sdk/
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install build
+      - run: python -m build
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: sdk/dist/
+
+  # ── Publish Docker image (on release) ─────────────────────────────────────────
+  publish-docker:
+    name: Publish Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    needs: [integration]
+    if: github.event_name == 'release'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/ai-obs-collector
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+      - uses: docker/build-push-action@v5
+        with:
+          context: ./collector
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}

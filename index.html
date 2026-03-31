@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ai-obs — Open AI Observability Platform | Self-Hosted LLM Monitoring</title>
+<meta name="description" content="Track latency, cost, accuracy and errors for every LLM call. Works with OpenAI, Anthropic, AWS Bedrock, HuggingFace and any HTTP endpoint. One Python decorator. Full visibility. Free, open-source, self-hosted forever.">
+<meta name="keywords" content="AI observability, LLM monitoring, OpenAI monitoring, Anthropic Claude monitoring, AWS Bedrock observability, AI cost tracking, LLM latency, AI accuracy, MLOps, open source AI tools">
+<meta property="og:title" content="ai-obs — Open AI Observability Platform">
+<meta property="og:description" content="One decorator. Any LLM. Full visibility. Self-hosted and free forever.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=JetBrains+Mono:wght@300;400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0a0a0b;--ink2:#101013;--ink3:#17171c;
+  --bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.13);
+  --tx:#e6e4df;--tx2:#9a9790;--tx3:#56544f;
+  --A:#c8f135;--B:#7df3c8;--C:#f3a447;
+  --R:#f06060;--BL:#60b0f0;--PU:#b06ef0;
+  --fh:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'JetBrains Mono',monospace;
+  --r:8px;--r2:14px;--W:1160px
+}
+html{scroll-behavior:smooth}
+body{background:var(--ink);color:var(--tx);font-family:var(--fb);font-size:16px;line-height:1.65;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(circle at 15% 15%,rgba(200,241,53,.05) 0%,transparent 50%),radial-gradient(circle at 85% 80%,rgba(125,243,200,.04) 0%,transparent 50%);pointer-events:none;z-index:0}
+
+/* ── NAV ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);background:rgba(10,10,11,.87);border-bottom:1px solid var(--bd)}
+.nav-i{max-width:var(--W);margin:0 auto;padding:0 32px;height:60px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:var(--fh);font-weight:800;font-size:18px;letter-spacing:-.5px;color:var(--tx);text-decoration:none;display:flex;align-items:center;gap:9px}
+.logo em{font-style:normal;color:var(--A)}
+.ldot{width:8px;height:8px;border-radius:50%;background:var(--A);animation:pulse 2.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(200,241,53,.45)}50%{box-shadow:0 0 0 8px rgba(200,241,53,0)}}
+.nav-ul{display:flex;align-items:center;gap:28px;list-style:none}
+.nav-ul a{color:var(--tx2);text-decoration:none;font-size:14px;transition:color .2s}
+.nav-ul a:hover{color:var(--tx)}
+.ncta{background:var(--A)!important;color:var(--ink)!important;padding:7px 16px!important;border-radius:var(--r)!important;font-family:var(--fh)!important;font-weight:700!important;font-size:13px!important;transition:opacity .2s!important}
+.ncta:hover{opacity:.82!important}
+
+/* ── HERO ── */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:120px 32px 80px;overflow:hidden}
+.hero::after{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse 75% 70% at 50% 44%,black 0%,transparent 100%);pointer-events:none}
+.eye{display:inline-flex;align-items:center;gap:8px;background:rgba(200,241,53,.07);border:1px solid rgba(200,241,53,.2);border-radius:100px;padding:5px 16px;font-family:var(--fm);font-size:11.5px;color:var(--A);letter-spacing:.08em;text-transform:uppercase;margin-bottom:32px;animation:fu .6s ease both}
+.hero h1{font-family:var(--fh);font-size:clamp(48px,9vw,108px);font-weight:800;letter-spacing:-.045em;line-height:.9;color:var(--tx);margin-bottom:28px;animation:fu .7s .1s ease both;position:relative;z-index:1}
+.hero h1 em{font-style:normal;color:var(--A);display:block}
+.hero-sub{max-width:540px;font-size:18px;font-weight:300;color:var(--tx2);line-height:1.6;margin-bottom:44px;animation:fu .7s .2s ease both;position:relative;z-index:1}
+.hbtns{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;animation:fu .7s .3s ease both;position:relative;z-index:1}
+.bp{display:inline-flex;align-items:center;gap:8px;background:var(--A);color:var(--ink);padding:14px 28px;border-radius:var(--r);font-family:var(--fh);font-size:15px;font-weight:700;letter-spacing:-.02em;text-decoration:none;transition:transform .15s,box-shadow .15s}
+.bp:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(200,241,53,.3)}
+.bs{display:inline-flex;align-items:center;gap:8px;background:transparent;color:var(--tx);padding:14px 28px;border-radius:var(--r);border:1px solid var(--bd2);font-family:var(--fh);font-size:15px;font-weight:600;letter-spacing:-.02em;text-decoration:none;transition:border-color .2s,background .2s}
+.bs:hover{border-color:var(--tx3);background:rgba(255,255,255,.03)}
+
+/* ── TERMINAL ── */
+.term{margin-top:60px;width:100%;max-width:680px;background:var(--ink2);border:1px solid var(--bd2);border-radius:var(--r2);overflow:hidden;text-align:left;animation:fu .7s .4s ease both;position:relative;z-index:1;box-shadow:0 40px 80px rgba(0,0,0,.55)}
+.tbar{display:flex;align-items:center;gap:7px;padding:12px 16px;border-bottom:1px solid var(--bd);background:var(--ink3)}
+.tdot{width:11px;height:11px;border-radius:50%}
+.tbar span{margin-left:8px;font-family:var(--fm);font-size:11px;color:var(--tx3)}
+.tcode{padding:24px 28px;font-family:var(--fm);font-size:13.5px;line-height:2;overflow-x:auto}
+.kw{color:var(--PU)}.fn{color:var(--B)}.str{color:var(--A)}.cm{color:var(--tx3);font-style:italic}.dc{color:var(--C)}.nm{color:var(--BL)}.op{color:var(--tx2)}
+
+/* ── STATS ── */
+.stats{border-top:1px solid var(--bd);border-bottom:1px solid var(--bd);background:var(--ink2)}
+.stats-i{max-width:var(--W);margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.st{padding:28px 32px;border-right:1px solid var(--bd)}
+.st:last-child{border-right:none}
+.stn{font-family:var(--fh);font-size:38px;font-weight:800;letter-spacing:-.04em;color:var(--A);line-height:1;margin-bottom:6px}
+.stl{font-size:13px;color:var(--tx2)}
+
+/* ── LAYOUT ── */
+section{position:relative;z-index:1}
+.si{max-width:var(--W);margin:0 auto;padding:96px 32px}
+.stag{display:inline-block;font-family:var(--fm);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--A);margin-bottom:14px}
+.sh{font-family:var(--fh);font-size:clamp(30px,5vw,54px);font-weight:800;letter-spacing:-.04em;line-height:1.05;color:var(--tx);margin-bottom:18px}
+.sp{font-size:17px;font-weight:300;color:var(--tx2);max-width:540px;line-height:1.6;margin-bottom:52px}
+hr.d{border:none;border-top:1px solid var(--bd);margin:0}
+
+/* ── HOW IT WORKS ── */
+.how-g{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--bd);border:1px solid var(--bd);border-radius:var(--r2);overflow:hidden}
+.hw{background:var(--ink2);padding:40px 42px;transition:background .2s;position:relative}
+.hw:hover{background:var(--ink3)}
+.hwn{font-family:var(--fm);font-size:11px;letter-spacing:.1em;color:var(--tx3);text-transform:uppercase;margin-bottom:14px}
+.hwico{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:18px}
+.il{background:rgba(200,241,53,.12)}.it{background:rgba(125,243,200,.12)}.ia{background:rgba(243,164,71,.12)}.ib{background:rgba(96,176,240,.12)}
+.hwh{font-family:var(--fh);font-size:20px;font-weight:700;letter-spacing:-.02em;color:var(--tx);margin-bottom:10px}
+.hwp{font-size:14px;color:var(--tx2);line-height:1.65}
+code.ic{font-family:var(--fm);font-size:12px;color:var(--B);background:rgba(125,243,200,.08);padding:1px 5px;border-radius:4px}
+
+/* ── ARCH BOX ── */
+.arch{background:var(--ink2);border:1px solid var(--bd2);border-radius:var(--r2);padding:44px 48px;overflow-x:auto;margin-top:40px}
+.arch pre{font-family:var(--fm);font-size:12.5px;line-height:1.9;color:var(--tx2);white-space:pre}
+.ah{color:var(--A)}.ah2{color:var(--B)}.ah3{color:var(--C)}.dm{color:var(--tx3)}
+
+/* ── PROVIDERS ── */
+.prov-g{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:44px}
+.pc{background:var(--ink2);border:1px solid var(--bd);border-radius:var(--r2);padding:24px 20px;display:flex;flex-direction:column;gap:12px;transition:border-color .2s,transform .15s;cursor:default}
+.pc:hover{border-color:var(--bd2);transform:translateY(-3px)}
+.pico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.pn{font-family:var(--fh);font-size:15px;font-weight:700;letter-spacing:-.02em;color:var(--tx)}
+.pt{font-family:var(--fm);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);margin-top:2px}
+.pd{font-size:12px;color:var(--tx3);line-height:1.55;margin-top:4px}
+
+/* ── CODE TABS ── */
+.ctabs{background:var(--ink2);border:1px solid var(--bd2);border-radius:var(--r2);overflow:hidden}
+.ctabs-nav{display:flex;border-bottom:1px solid var(--bd);overflow-x:auto;background:var(--ink3)}
+.ctab{padding:12px 20px;font-family:var(--fm);font-size:12px;color:var(--tx3);cursor:pointer;border:none;background:none;white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;letter-spacing:.02em}
+.ctab:hover{color:var(--tx2)}.ctab.on{color:var(--A);border-bottom-color:var(--A)}
+.cpanel{display:none;padding:28px 32px;font-family:var(--fm);font-size:13.5px;line-height:1.9;overflow-x:auto}
+.cpanel.on{display:block}
+
+/* ── FEATURES ── */
+.feat-g{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--bd);border:1px solid var(--bd);border-radius:var(--r2);overflow:hidden}
+.fc{background:var(--ink2);padding:36px;transition:background .2s}
+.fc:hover{background:var(--ink3)}
+.fico{font-size:28px;margin-bottom:16px;display:block}
+.fh{font-family:var(--fh);font-size:17px;font-weight:700;letter-spacing:-.02em;color:var(--tx);margin-bottom:10px}
+.fp{font-size:14px;color:var(--tx2);line-height:1.65}
+.bg{display:inline-block;margin-top:14px;font-family:var(--fm);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:4px}
+.gl{background:rgba(200,241,53,.1);color:var(--A)}.gt{background:rgba(125,243,200,.1);color:var(--B)}.ga{background:rgba(243,164,71,.1);color:var(--C)}.gr{background:rgba(240,96,96,.1);color:var(--R)}.gb{background:rgba(96,176,240,.1);color:var(--BL)}.gp{background:rgba(176,110,240,.1);color:var(--PU)}
+
+/* ── PLUGIN ── */
+.plug-g{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+.plug-l{display:flex;flex-direction:column;gap:12px}
+.pi{display:flex;align-items:center;gap:16px;background:var(--ink2);border:1px solid var(--bd);border-radius:var(--r);padding:16px 20px;transition:border-color .2s}
+.pi:hover{border-color:var(--bd2)}
+.pii{width:36px;height:36px;border-radius:8px;background:rgba(200,241,53,.1);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.pin{font-family:var(--fh);font-size:14px;font-weight:600;letter-spacing:-.01em;color:var(--tx)}
+.pid{font-size:12px;color:var(--tx3);margin-top:2px}
+
+/* ── DASHBOARD PREVIEW ── */
+.dp{background:var(--ink2);border:1px solid var(--bd2);border-radius:var(--r2);padding:28px;overflow:hidden}
+.dpbar{display:flex;align-items:center;gap:7px;margin-bottom:20px}
+.dpbar span{margin-left:8px;font-family:var(--fm);font-size:11px;color:var(--tx3)}
+.dp-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+.dps{background:var(--ink3);border:1px solid var(--bd);border-radius:var(--r);padding:16px}
+.dpsv{font-family:var(--fh);font-size:24px;font-weight:800;letter-spacing:-.04em;margin-bottom:4px}
+.dpsl{font-size:11px;color:var(--tx3);font-family:var(--fm)}
+.dp-charts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dch{background:var(--ink3);border:1px solid var(--bd);border-radius:var(--r);padding:14px;height:110px}
+.dchl{font-family:var(--fm);font-size:10px;color:var(--tx3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.dchb{display:flex;align-items:flex-end;gap:4px;height:78px}
+.dbar{flex:1;border-radius:2px 2px 0 0;min-height:3px;transition:opacity .2s}
+.dbar:hover{opacity:.7}
+
+/* ── USE CASES ── */
+.uc-g{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.ucc{background:var(--ink2);border:1px solid var(--bd);border-radius:var(--r2);padding:32px 28px;transition:border-color .2s,transform .15s}
+.ucc:hover{border-color:var(--bd2);transform:translateY(-4px)}
+.ucw{font-family:var(--fm);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--A);margin-bottom:12px}
+.uch{font-family:var(--fh);font-size:18px;font-weight:700;letter-spacing:-.02em;color:var(--tx);margin-bottom:10px}
+.ucp{font-size:14px;color:var(--tx2);line-height:1.65}
+.ucl{margin-top:16px;list-style:none;display:flex;flex-direction:column;gap:8px}
+.ucl li{font-size:13px;color:var(--tx2);display:flex;align-items:flex-start;gap:8px}
+.ucl li::before{content:'→';color:var(--A);font-size:12px;margin-top:2px;flex-shrink:0}
+
+/* ── QUICKSTART ── */
+.qs-g{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--bd);border:1px solid var(--bd);border-radius:var(--r2);overflow:hidden;margin-bottom:40px}
+.qss{background:var(--ink2);padding:32px 28px;transition:background .2s}
+.qss:hover{background:var(--ink3)}
+.qsn{font-family:var(--fm);font-size:11px;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px}
+.qsh{font-family:var(--fh);font-size:16px;font-weight:700;letter-spacing:-.02em;color:var(--tx);margin-bottom:10px}
+.qsc{font-family:var(--fm);font-size:12px;color:var(--A);background:rgba(200,241,53,.06);border:1px solid rgba(200,241,53,.15);border-radius:6px;padding:8px 12px;display:block;white-space:pre;overflow-x:auto}
+.qsp{font-size:13px;color:var(--tx2);margin-top:10px;line-height:1.55}
+
+/* ── ENV VARS ── */
+.envbox{background:var(--ink2);border:1px solid var(--bd2);border-radius:var(--r2);padding:32px 40px}
+.envbox pre{font-family:var(--fm);font-size:12.5px;line-height:2.1;color:var(--tx2)}
+
+/* ── FORKING GUIDE ── */
+.fork-g{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--bd);border:1px solid var(--bd);border-radius:var(--r2);overflow:hidden}
+.fk{background:var(--ink2);padding:30px 32px;transition:background .2s}
+.fk:hover{background:var(--ink3)}
+.fkn{font-family:var(--fm);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--tx3);margin-bottom:10px}
+.fkh{font-family:var(--fh);font-size:16px;font-weight:700;letter-spacing:-.02em;color:var(--tx);margin-bottom:8px}
+.fkp{font-size:13px;color:var(--tx2);line-height:1.6;margin-bottom:10px}
+.fkt{font-family:var(--fm);font-size:11px;color:var(--A);opacity:.75}
+
+/* ── CTA ── */
+.cta{border-top:1px solid var(--bd);background:var(--ink2);text-align:center}
+.cta-i{max-width:var(--W);margin:0 auto;padding:100px 32px}
+.ctah{font-family:var(--fh);font-size:clamp(38px,6vw,70px);font-weight:800;letter-spacing:-.04em;line-height:1;color:var(--tx);margin-bottom:20px}
+.ctah em{font-style:normal;color:var(--A)}
+.ctap{font-size:17px;color:var(--tx2);max-width:460px;margin:0 auto 40px;font-weight:300}
+.cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+/* ── FOOTER ── */
+footer{border-top:1px solid var(--bd);padding:36px 32px}
+.ft-i{max-width:var(--W);margin:0 auto;display:flex;align-items:center;justify-content:space-between}
+.ftc{font-size:13px;color:var(--tx3)}
+.ftl{display:flex;gap:24px}
+.ftl a{font-size:13px;color:var(--tx3);text-decoration:none;transition:color .2s}
+.ftl a:hover{color:var(--tx2)}
+
+/* ── ANIMATIONS ── */
+@keyframes fu{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.fi{opacity:0;transform:translateY(20px);transition:opacity .65s ease,transform .65s ease}
+.fi.vis{opacity:1;transform:translateY(0)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){.how-g,.plug-g,.feat-g,.uc-g{grid-template-columns:1fr}.prov-g{grid-template-columns:repeat(3,1fr)}.stats-i{grid-template-columns:repeat(2,1fr)}.qs-g{grid-template-columns:1fr 1fr}.dp-stats{grid-template-columns:repeat(2,1fr)}.dp-charts{grid-template-columns:1fr}.ft-i{flex-direction:column;gap:16px;text-align:center}.nav-ul{display:none}.fork-g{grid-template-columns:1fr}}
+@media(max-width:600px){.prov-g{grid-template-columns:repeat(2,1fr)}.qs-g{grid-template-columns:1fr}.stats-i{grid-template-columns:1fr 1fr}}
+
+</style>
+</head>
+<body>
+<!-- NAV -->
+<nav>
+  <div class="nav-i">
+    <a href="#" class="logo"><div class="ldot"></div>ai<em>-obs</em></a>
+    <ul class="nav-ul">
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#providers">Providers</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#usecases">Use cases</a></li>
+      <li><a href="#quickstart">Quick start</a></li>
+      <li><a href="https://github.com/your-org/ai-obs" class="ncta">GitHub ↗</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="eye"><span>●</span>&nbsp; Open source &nbsp;·&nbsp; Self-hosted &nbsp;·&nbsp; Free forever</div>
+  <h1>Full visibility<em>into every AI call</em></h1>
+  <p class="hero-sub">One Python decorator instruments any LLM. Track latency, cost, accuracy and errors across OpenAI, Anthropic, AWS Bedrock, HuggingFace and any HTTP model. Your data never leaves your servers.</p>
+  <div class="hbtns">
+    <a href="#quickstart" class="bp">Get started free →</a>
+    <a href="https://github.com/your-org/ai-obs" class="bs">⭐ Star on GitHub</a>
+  </div>
+  <div class="term">
+    <div class="tbar">
+      <div class="tdot" style="background:#ff5f57"></div>
+      <div class="tdot" style="background:#ffbd2e"></div>
+      <div class="tdot" style="background:#28c840"></div>
+      <span>your_app.py — add 2 lines, get full observability</span>
+    </div>
+    <div class="tcode">
+<span class="cm"># Before ai-obs → flying completely blind in production</span>
+<span class="cm"># After  ai-obs → full visibility in 2 lines of code</span>
+
+<span class="kw">from</span> <span class="fn">ai_obs</span> <span class="kw">import</span> observe
+<span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+
+client <span class="op">=</span> OpenAI()
+
+<span class="dc">@observe</span>(model<span class="op">=</span><span class="str">"gpt-4o"</span>, provider<span class="op">=</span><span class="str">"openai"</span>)  <span class="cm"># ← add this one line</span>
+<span class="kw">def</span> <span class="fn">ask</span>(prompt: str) <span class="op">-></span> str:
+    resp <span class="op">=</span> client.chat.completions.create(    <span class="cm"># ← existing code unchanged</span>
+        model<span class="op">=</span><span class="str">"gpt-4o"</span>,
+        messages<span class="op">=</span>[{<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: prompt}]
+    )
+    <span class="kw">return</span> resp.choices[<span class="nm">0</span>].message.content
+
+<span class="cm"># Grafana dashboard now shows automatically:</span>
+<span class="cm"># ✓ Latency p50/p95/p99   ✓ Token usage   ✓ Cost USD</span>
+<span class="cm"># ✓ Error rate             ✓ Accuracy score ✓ Drift over time</span>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-i">
+    <div class="st"><div class="stn">5</div><div class="stl">AI providers supported out of the box</div></div>
+    <div class="st"><div class="stn">2</div><div class="stl">Lines of code to instrument any LLM call</div></div>
+    <div class="st"><div class="stn">0</div><div class="stl">Data sent to third-party clouds ever</div></div>
+    <div class="st"><div class="stn">MIT</div><div class="stl">Free to use, fork and extend forever</div></div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+<div class="si">
+  <span class="stag">How it works</span>
+  <h2 class="sh">Three layers.<br>Total visibility.</h2>
+  <p class="sp">ai-obs is a pipeline from your AI code to your Grafana dashboard. Each layer is independently useful and stays completely out of your way.</p>
+  <div class="how-g fi">
+    <div class="hw">
+      <div class="hwn">Layer 01 — Your code</div>
+      <div class="hwico il">🎯</div>
+      <div class="hwh">Instrument with one decorator</div>
+      <p class="hwp">Add <code class="ic">@observe(model=..., provider=...)</code> to any function that calls an LLM. Zero changes to your existing logic. Also works as <strong style="color:var(--tx)">FastAPI middleware</strong> (instruments every route automatically) and a <strong style="color:var(--tx)">LangChain callback handler</strong>.</p>
+    </div>
+    <div class="hw">
+      <div class="hwn">Layer 02 — The collector</div>
+      <div class="hwico it">📡</div>
+      <div class="hwh">Events batch to a collector service</div>
+      <p class="hwp">The SDK queues events in a background thread and flushes every 5 seconds — <strong style="color:var(--tx)">zero latency impact</strong> on your actual LLM calls. The FastAPI collector validates, persists to PostgreSQL, and updates Redis real-time counters in a single batch pipeline.</p>
+    </div>
+    <div class="hw">
+      <div class="hwn">Layer 03 — Grafana</div>
+      <div class="hwico ia">📊</div>
+      <div class="hwh">Dashboards auto-populate on first boot</div>
+      <p class="hwp">Three Grafana dashboards are provisioned automatically — <strong style="color:var(--tx)">no manual setup, no JSON import</strong>. Run <code class="ic">docker compose up</code>, open localhost:3000, and your latency, cost, accuracy, and error panels are already live with seed data.</p>
+    </div>
+    <div class="hw">
+      <div class="hwn">Layer 04 — Plugins (optional)</div>
+      <div class="hwico ib">🔌</div>
+      <div class="hwh">Export to any system you already use</div>
+      <p class="hwp">Register custom exporters to forward every event to Datadog, ClickHouse, S3, Slack, or any system in under 10 lines. Built-ins: <code class="ic">WebhookExporter</code>, <code class="ic">S3Exporter</code>, <code class="ic">DatadogExporter</code>, <code class="ic">FileExporter</code>. One failure never blocks others.</p>
+    </div>
+  </div>
+
+  <!-- Architecture diagram -->
+  <div class="arch fi">
+    <pre>
+<span class="ah">Your AI App</span>  <span class="dm">(OpenAI · Anthropic · AWS Bedrock · HuggingFace · Ollama · any HTTP model)</span>
+      │
+      │  <span class="ah2">ai-obs-sdk</span>  <span class="dm">pip install ai-obs-sdk</span>
+      │  <span class="dm">── @observe decorator  /  FastAPI middleware  /  LangChain callback ──────</span>
+      │  <span class="dm">── events queued in background thread, flushed every 5 s, zero latency ───</span>
+      ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│  <span class="ah">Collector</span>  <span class="dm">(FastAPI · port 8080 · Docker)</span>                              │
+│                                                                         │
+│  POST <span class="ah2">/v1/events</span>    ingest + validate + enrich                         │
+│  POST <span class="ah2">/v1/scores</span>    manual &amp; LLM-as-judge accuracy scoring            │
+│  GET  <span class="ah2">/v1/metrics/*</span>  query API for Grafana &amp; external consumers        │
+│  GET  <span class="ah2">/v1/health</span>    liveness + readiness probes                       │
+│                                                                         │
+│  <span class="ah3">Plugin exporters</span> → Datadog / S3 / Webhook / ClickHouse / custom        │
+└──────────┬───────────────────────┬───────────────────────────┬──────────┘
+           │                       │                           │
+    <span class="ah">PostgreSQL</span>              <span class="ah">Redis</span>                     <span class="ah3">MinIO</span>
+    <span class="dm">events, scores</span>         <span class="dm">real-time counters</span>        <span class="dm">raw log archive</span>
+    <span class="dm">traces, indexes</span>        <span class="dm">minute-level buckets</span>      <span class="dm">(S3-compatible)</span>
+           │                       │
+           └──────────┬────────────┘
+                      ▼
+            ┌─────────────────────┐
+            │  <span class="ah">Grafana</span>  :3000     │
+            │  Overview dashboard │  <span class="dm">requests · latency · cost · errors</span>
+            │  Model detail       │  <span class="dm">p50/p95/p99 · token breakdown</span>
+            │  Accuracy &amp; quality │  <span class="dm">score trends · drift detection</span>
+            └─────────────────────┘
+    </pre>
+  </div>
+</div>
+</section>
+<hr class="d">
+
+<!-- PROVIDERS -->
+<section id="providers">
+<div class="si">
+  <span class="stag">Providers</span>
+  <h2 class="sh">Every major LLM.<br>One SDK.</h2>
+  <p class="sp">Token extraction and cost calculation built-in for all providers. Add a new one in 15 minutes with a single handler function and one call to <code class="ic">register_provider()</code>.</p>
+  <div class="prov-g fi">
+    <div class="pc">
+      <div class="pico" style="background:rgba(16,163,127,.15)">🟢</div>
+      <div><div class="pn">OpenAI</div><div class="pt">provider="openai"</div></div>
+      <div class="pd">GPT-4o, GPT-4o-mini, o1, GPT-3.5 — token counts and cost auto-extracted from response objects</div>
+    </div>
+    <div class="pc">
+      <div class="pico" style="background:rgba(210,105,30,.15)">🔶</div>
+      <div><div class="pn">Anthropic</div><div class="pt">provider="anthropic"</div></div>
+      <div class="pd">Claude Opus, Sonnet, Haiku — input/output token tracking from the Messages API</div>
+    </div>
+    <div class="pc">
+      <div class="pico" style="background:rgba(255,153,0,.15)">☁️</div>
+      <div><div class="pn">AWS Bedrock</div><div class="pt">provider="bedrock"</div></div>
+      <div class="pd">Titan, Claude-on-Bedrock, Llama, Mistral — all three Bedrock response shapes handled</div>
+    </div>
+    <div class="pc">
+      <div class="pico" style="background:rgba(255,210,0,.15)">🤗</div>
+      <div><div class="pn">HuggingFace</div><div class="pt">provider="huggingface"</div></div>
+      <div class="pd">Inference API and local pipelines — token estimation from output length when counts unavailable</div>
+    </div>
+    <div class="pc">
+      <div class="pico" style="background:rgba(96,176,240,.15)">🔧</div>
+      <div><div class="pn">Generic HTTP</div><div class="pt">provider="generic"</div></div>
+      <div class="pd">Ollama, vLLM, LM Studio, any OpenAI-compatible endpoint — works out of the box</div>
+    </div>
+  </div>
+
+  <!-- Code tabs -->
+  <div class="ctabs fi">
+    <div class="ctabs-nav">
+      <button class="ctab on" onclick="tab(this,'t0')">OpenAI</button>
+      <button class="ctab" onclick="tab(this,'t1')">Anthropic</button>
+      <button class="ctab" onclick="tab(this,'t2')">AWS Bedrock</button>
+      <button class="ctab" onclick="tab(this,'t3')">HuggingFace</button>
+      <button class="ctab" onclick="tab(this,'t4')">Ollama / vLLM</button>
+      <button class="ctab" onclick="tab(this,'t5')">FastAPI middleware</button>
+      <button class="ctab" onclick="tab(this,'t6')">LangChain</button>
+      <button class="ctab" onclick="tab(this,'t7')">Custom provider</button>
+    </div>
+    <div id="t0" class="cpanel on">
+<span class="kw">from</span> <span class="fn">ai_obs</span> <span class="kw">import</span> observe
+<span class="kw">from</span> openai <span class="kw">import</span> OpenAI
+
+client <span class="op">=</span> OpenAI()
+
+<span class="dc">@observe</span>(model<span class="op">=</span><span class="str">"gpt-4o"</span>, provider<span class="op">=</span><span class="str">"openai"</span>, endpoint<span class="op">=</span><span class="str">"chat"</span>)
+<span class="kw">def</span> <span class="fn">ask</span>(prompt: str) <span class="op">-></span> str:
+    resp <span class="op">=</span> client.chat.completions.create(
+        model<span class="op">=</span><span class="str">"gpt-4o"</span>,
+        messages<span class="op">=</span>[{<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: prompt}]
+    )
+    <span class="kw">return</span> resp.choices[<span class="nm">0</span>].message.content
+
+<span class="cm"># Captures: latency, prompt_tokens, completion_tokens, cost_usd, errors</span></div>
+    <div id="t1" class="cpanel">
+<span class="kw">from</span> <span class="fn">ai_obs</span> <span class="kw">import</span> observe
+<span class="kw">import</span> anthropic
+
+client <span class="op">=</span> anthropic.Anthropic()
+
+<span class="dc">@observe</span>(model<span class="op">=</span><span class="str">"claude-sonnet-4-6"</span>, provider<span class="op">=</span><span class="str">"anthropic"</span>)
+<span class="kw">def</span> <span class="fn">ask_claude</span>(prompt: str) <span class="op">-></span> str:
+    msg <span class="op">=</span> client.messages.create(
+        model<span class="op">=</span><span class="str">"claude-sonnet-4-6"</span>, max_tokens<span class="op">=</span><span class="nm">1024</span>,
+        messages<span class="op">=</span>[{<span class="str">"role"</span>: <span class="str">"user"</span>, <span class="str">"content"</span>: prompt}]
+    )
+    <span class="kw">return</span> msg.content[<span class="nm">0</span>].text</div>
+    <div id="t2" class="cpanel">
+<span class="kw">from</span> <span class="fn">ai_obs</span> <span class="kw">import</span> observe
+<span class="kw">import</span> boto3, json
+
+bedrock <span class="op">=</span> boto3.client(<span class="str">"bedrock-runtime"</span>, region_name<span class="op">=</span><span class="str">"us-east-1"</span>)
+
+<span class="dc">@observe</span>(model<span class="op">=</span><span class="str">"amazon.titan-text-express-v1"</span>, provider<span class="op">=</span><span class="str">"bedrock"</span>)
+<span class="kw">def</span> <span class="fn">ask_bedrock</span>(prompt: str) <span class="op">-></span> str:
+    resp <span class="op">=</span> bedrock.invoke_model(
+        modelId<span class="op">=</span><span class="str">"amazon.titan-text-express-v1"</span>,
+        body<span class="op">=</span>json.dumps({<span class="str">"inputText"</span>: prompt})
+    )
+    <span class="kw">return</span> json.loads(resp[<span class="str">"body"</span>].read())[<span class="str">"results"</span>][<span class="nm">0</span>][<span class="str">"outputText"</span>]
+
+<span class="cm"># Also works: Claude-on-Bedrock, Llama-on-Bedrock, Mistral-on-Bedrock</span></div>
+    <div id="t3" class="cpanel">
+<span class="kw">from</span> <span class="fn">ai_obs</span> <span class="kw">import</span> observe
+<span class="kw">from</span> huggingface_hub <span class="kw">import</span> InferenceClient
+
+client <span class="op">=</span> InferenceClient()
+
+<span class="dc">@observe</span>(model<span class="op">=</span><span class="str">"meta-llama/Llama-3-8B-Instruct"</span>, provider<span class="op">=</span><span class="str">"huggingface"</span>)
+<span class="kw">def</span> <span class="fn">ask_hf</span>(prompt: str) <span class="op">-></span> str:
+    <span class="kw">return</span> client.text_generation(prompt, max_new_tokens<span class="op">=</span><span class="nm">512</span>)
+
+<span class="cm"># Works with Inference API, Inference Endpoints, and local pipelines</span></div>
+    <div id="t4" class="cpanel">
+<span class="kw">from</span> <span class="fn">ai_obs</span> <span class="kw">import</span> observe
+<span class="kw">import</span> requests
+
+<span class="cm"># provider="ollama" also works — it's an alias for generic</span>
+<span class="dc">@observe</span>(model<span class="op">=</span><span class="str">"llama3:8b"</span>, provider<span class="op">=</span><span class="str">"ollama"</span>, endpoint<span class="op">=</span><span class="str">"local"</span>)
+<span class="kw">def</span> <span class="fn">ask_local</span>(prompt: str) <span class="op">-></span> str:
+    resp <span class="op">=</span> requests.post(
+        <span class="str">"http://localhost:11434/api/generate"</span>,
+        json<span class="op">=</span>{<span class="str">"model"</span>: <span class="str">"llama3"</span>, <span class="str">"prompt"</span>: prompt, <span class="str">"stream"</span>: <span class="kw">False</span>}
+    )
+    <span class="kw">return</span> resp.json()[<span class="str">"response"</span>]
+
+<span class="cm"># Same pattern works for vLLM, LM Studio, any OpenAI-compatible server</span></div>
+    <div id="t5" class="cpanel">
+<span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI
+<span class="kw">from</span> ai_obs.middleware <span class="kw">import</span> AIObsMiddleware
+
+app <span class="op">=</span> FastAPI()
+
+<span class="cm"># Instruments EVERY route automatically — no per-route changes needed</span>
+app.add_middleware(
+    AIObsMiddleware,
+    provider<span class="op">=</span><span class="str">"openai"</span>,
+    model<span class="op">=</span><span class="str">"gpt-4o"</span>,
+    skip_paths<span class="op">=</span>[<span class="str">"/health"</span>, <span class="str">"/docs"</span>, <span class="str">"/redoc"</span>]
+)
+<span class="cm"># Every request gets an X-AI-Obs-Trace-Id header for manual scoring</span></div>
+    <div id="t6" class="cpanel">
+<span class="kw">from</span> langchain_openai <span class="kw">import</span> ChatOpenAI
+<span class="kw">from</span> ai_obs.middleware <span class="kw">import</span> AIObsCallbackHandler
+
+<span class="cm"># Works with any LangChain LLM, chain, or agent</span>
+llm <span class="op">=</span> ChatOpenAI(
+    model<span class="op">=</span><span class="str">"gpt-4o"</span>,
+    callbacks<span class="op">=</span>[AIObsCallbackHandler(
+        provider<span class="op">=</span><span class="str">"openai"</span>,
+        tags<span class="op">=</span>{<span class="str">"framework"</span>: <span class="str">"langchain"</span>}
+    )]
+)
+<span class="cm"># All LangChain calls through this LLM are now tracked</span></div>
+    <div id="t7" class="cpanel">
+<span class="kw">from</span> ai_obs.providers <span class="kw">import</span> register_provider
+
+<span class="cm"># Add any new provider — one function, registered at runtime</span>
+<span class="kw">def</span> <span class="fn">my_provider_handler</span>(result):
+    <span class="kw">return</span> {
+        <span class="str">"model"</span>:             result.model_id,
+        <span class="str">"prompt_tokens"</span>:     result.usage.input_tokens,
+        <span class="str">"completion_tokens"</span>: result.usage.output_tokens,
+    }
+
+register_provider(<span class="str">"myprovider"</span>, my_provider_handler)
+
+<span class="cm"># Now use it just like any built-in:</span>
+<span class="dc">@observe</span>(model<span class="op">=</span><span class="str">"my-model-v1"</span>, provider<span class="op">=</span><span class="str">"myprovider"</span>)
+<span class="kw">def</span> <span class="fn">ask_custom</span>(prompt): ...</div>
+  </div>
+</div>
+</section>
+<hr class="d">
+
+<!-- FEATURES -->
+<section id="features">
+<div class="si">
+  <span class="stag">Features</span>
+  <h2 class="sh">Everything your<br>AI team needs.</h2>
+  <p class="sp">Built because commercial observability tools are expensive, require sending your data to third parties, and still don't answer the questions AI teams actually have.</p>
+  <div class="feat-g fi">
+    <div class="fc"><span class="fico">⚡</span><div class="fh">Latency tracking</div><p class="fp">Wall-clock latency for every call. p50, p95, p99 per model, endpoint, and environment. Histogram distribution to catch outliers before users do.</p><span class="bg gl">Real-time</span></div>
+    <div class="fc"><span class="fico">💰</span><div class="fh">Cost tracking</div><p class="fp">Token usage and estimated USD spend per model. 20+ models in the cost table. Hourly, daily, 30-day breakdowns. Cost attributed per endpoint and team tag.</p><span class="bg ga">20+ models</span></div>
+    <div class="fc"><span class="fico">🎯</span><div class="fh">Accuracy scoring</div><p class="fp">Manual scoring via <code class="ic">score()</code> or fully automated LLM-as-judge evaluation via <code class="ic">autoscore()</code>. Scores link to traces by ID. Label filtering and distributions built in.</p><span class="bg gt">LLM-as-judge</span></div>
+    <div class="fc"><span class="fico">❌</span><div class="fh">Error tracking</div><p class="fp">Full error messages and tracebacks captured automatically. Error rate per model. Recent errors table with drill-down. Rate limit and timeout patterns surfaced clearly.</p><span class="bg gr">Auto-captured</span></div>
+    <div class="fc"><span class="fico">🔀</span><div class="fh">Drift detection</div><p class="fp">Daily accuracy trend chart reveals model quality degradation over time. Latency trend catches regressions. Know before your users report it.</p><span class="bg gp">7-day trends</span></div>
+    <div class="fc"><span class="fico">🔌</span><div class="fh">Plugin exporters</div><p class="fp">Forward events to any backend by subclassing <code class="ic">BaseExporter</code>. Built-ins: Webhook, S3, Datadog, File. All exporters run in parallel — one failure never blocks others.</p><span class="bg gb">Extensible</span></div>
+    <div class="fc"><span class="fico">🔒</span><div class="fh">Self-hosted</div><p class="fp">Your prompts, completions, and metrics never leave your infrastructure. PostgreSQL + Redis + MinIO — standard open-source components you already understand and trust.</p><span class="bg gl">Zero vendor lock-in</span></div>
+    <div class="fc"><span class="fico">📊</span><div class="fh">Pre-built dashboards</div><p class="fp">Three Grafana dashboards auto-provisioned on first boot. Overview, Model Detail, Accuracy. 1,000 rows of seed data so they look real from the first minute.</p><span class="bg gt">Zero config</span></div>
+    <div class="fc"><span class="fico">🎛️</span><div class="fh">Sampling & privacy</div><p class="fp">Set <code class="ic">AI_OBS_SAMPLE_RATE=0.1</code> to capture 10% of calls at high volume. Prompt and completion storage is opt-in and off by default — your users' data stays private.</p><span class="bg ga">Production-safe</span></div>
+  </div>
+</div>
+</section>
+<hr class="d">
+
+<!-- DASHBOARD PREVIEW -->
+<section>
+<div class="si">
+  <span class="stag">Dashboard</span>
+  <h2 class="sh">Grafana, fully wired<br>on first boot.</h2>
+  <p class="sp">Run <code class="ic" style="font-size:14px">docker compose up</code>, open localhost:3000, and three fully-populated dashboards are waiting. No JSON import. No manual datasource setup. No configuration at all.</p>
+  <div class="dp fi">
+    <div class="dpbar">
+      <div class="tdot" style="background:#ff5f57"></div>
+      <div class="tdot" style="background:#ffbd2e"></div>
+      <div class="tdot" style="background:#28c840"></div>
+      <span>AI Observability — Overview &nbsp;·&nbsp; Last 24 hours &nbsp;·&nbsp; Auto-refresh 30 s</span>
+    </div>
+    <div class="dp-stats">
+      <div class="dps"><div class="dpsv" style="color:var(--BL)">12,847</div><div class="dpsl">Total Requests (24h)</div></div>
+      <div class="dps"><div class="dpsv" style="color:var(--B)">342 ms</div><div class="dpsl">Avg Latency</div></div>
+      <div class="dps"><div class="dpsv" style="color:var(--C)">$4.21</div><div class="dpsl">Total Cost (24h)</div></div>
+      <div class="dps"><div class="dpsv" style="color:var(--A)">0.87</div><div class="dpsl">Avg Accuracy Score</div></div>
+    </div>
+    <div class="dp-charts">
+      <div class="dch"><div class="dchl">Requests / hour by provider</div><div class="dchb" id="ch1"></div></div>
+      <div class="dch"><div class="dchl">Latency p50 / p95 / p99</div><div class="dchb" id="ch2"></div></div>
+    </div>
+  </div>
+</div>
+</section>
+<hr class="d">
+
+<!-- PLUGIN SYSTEM -->
+<section>
+<div class="si">
+  <span class="stag">Plugin system</span>
+  <h2 class="sh">Export to anything.<br>10 lines of code.</h2>
+  <p class="sp">ai-obs is designed to live inside your existing infrastructure. Every event can be forwarded to any system you already use — no rip-and-replace.</p>
+  <div class="plug-g fi">
+    <div class="plug-l">
+      <div class="pi"><div class="pii">📤</div><div><div class="pin">WebhookExporter</div><div class="pid">POST events to Slack, Teams, n8n, Zapier, or any HTTP endpoint</div></div></div>
+      <div class="pi"><div class="pii">🪣</div><div><div class="pin">S3Exporter</div><div class="pid">Write NDJSON batches to S3, MinIO, Cloudflare R2, or Backblaze B2</div></div></div>
+      <div class="pi"><div class="pii">🐶</div><div><div class="pin">DatadogExporter</div><div class="pid">Ship latency, token, cost and error metrics to Datadog via HTTP API</div></div></div>
+      <div class="pi"><div class="pii">📁</div><div><div class="pin">FileExporter</div><div class="pid">Append NDJSON lines to a local file — simple audit log, zero dependencies</div></div></div>
+      <div class="pi"><div class="pii">🔧</div><div><div class="pin">Your own exporter</div><div class="pid">ClickHouse, BigQuery, Splunk, PagerDuty — subclass BaseExporter in 10 lines</div></div></div>
+    </div>
+    <div class="ctabs">
+      <div class="tbar" style="background:var(--ink3)">
+        <div class="tdot" style="background:#ff5f57"></div><div class="tdot" style="background:#ffbd2e"></div><div class="tdot" style="background:#28c840"></div>
+        <span>Register exporters in your app startup</span>
+      </div>
+      <div style="padding:24px 28px;font-family:var(--fm);font-size:13px;line-height:1.9">
+<span class="kw">from</span> ai_obs <span class="kw">import</span> registry
+<span class="kw">from</span> ai_obs.exporters <span class="kw">import</span> WebhookExporter, S3Exporter
+
+<span class="cm"># Forward error alerts to Slack</span>
+registry.register(WebhookExporter(
+    url<span class="op">=</span><span class="str">"https://hooks.slack.com/services/..."</span>
+))
+
+<span class="cm"># Archive all events to S3 (or MinIO, R2, Backblaze)</span>
+registry.register(S3Exporter(
+    bucket<span class="op">=</span><span class="str">"my-ai-logs"</span>, region<span class="op">=</span><span class="str">"us-east-1"</span>
+))
+
+<span class="cm"># Write your own in 10 lines — any backend</span>
+<span class="kw">from</span> ai_obs.exporters <span class="kw">import</span> BaseExporter
+
+<span class="kw">class</span> <span class="fn">ClickHouseExporter</span>(BaseExporter):
+    <span class="kw">def</span> <span class="fn">export</span>(<span class="kw">self</span>, events: list[dict]):
+        <span class="kw">for</span> e <span class="kw">in</span> events:
+            ch_client.insert(<span class="str">"ai_obs.events"</span>, e)
+
+registry.register(ClickHouseExporter())
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+<hr class="d">
+
+<!-- USE CASES -->
+<section id="usecases">
+<div class="si">
+  <span class="stag">Use cases</span>
+  <h2 class="sh">Who uses ai-obs<br>and why.</h2>
+  <p class="sp">The same questions come up every time an AI system reaches production — regardless of team size or company stage.</p>
+  <div class="uc-g fi">
+    <div class="ucc">
+      <div class="ucw">Solo developers &amp; indie hackers</div>
+      <div class="uch">Stop guessing how much your side project costs</div>
+      <p class="ucp">You're shipping an LLM-powered app on a budget. You need to know exactly what each feature costs per call before you hit a surprise $500 bill at month end.</p>
+      <ul class="ucl">
+        <li>Real-time cost per model and endpoint</li>
+        <li>Which prompts are failing and why</li>
+        <li>Latency spikes that slow your app down</li>
+        <li>Usage growth as your user base scales</li>
+      </ul>
+    </div>
+    <div class="ucc">
+      <div class="ucw">ML engineers &amp; AI teams</div>
+      <div class="uch">Catch model quality degradation before users do</div>
+      <p class="ucp">You've shipped a model to production. Now you need to know if accuracy is drifting, latency is creeping, or a new prompt version broke something quietly.</p>
+      <ul class="ucl">
+        <li>Accuracy drift detection with daily trends</li>
+        <li>LLM-as-judge auto-scoring at scale</li>
+        <li>p50/p95/p99 latency per model version</li>
+        <li>Error pattern analysis and rate tracking</li>
+      </ul>
+    </div>
+    <div class="ucc">
+      <div class="ucw">Platform &amp; DevOps teams</div>
+      <div class="uch">Treat AI APIs like any other production service</div>
+      <p class="ucp">Your organisation runs multiple AI workloads. You need the same SLOs, alerting, and cost attribution you'd apply to any other microservice in your fleet.</p>
+      <ul class="ucl">
+        <li>SLO dashboards for latency and availability</li>
+        <li>Cost attribution per team or feature tag</li>
+        <li>Rate limit and quota hit tracking</li>
+        <li>Export to existing Datadog or PagerDuty</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+<hr class="d">
+
+<!-- FORKING GUIDE -->
+<section>
+<div class="si">
+  <span class="stag">Built to be forked</span>
+  <h2 class="sh">Extend it.<br>Make it yours.</h2>
+  <p class="sp">Every part of ai-obs was designed to be a starting point. Fork it, add your provider, add your exporter, ship it to your team in an afternoon.</p>
+  <div class="fork-g fi">
+    <div class="fk"><div class="fkn">~15 min</div><div class="fkh">Add a new LLM provider</div><p class="fkp">Write one handler function in <code class="ic">sdk/ai_obs/providers/</code> that extracts token counts from the response object. Add cost table entries. Register it. Done.</p><div class="fkt">register_provider("myprovider", handler)</div></div>
+    <div class="fk"><div class="fkn">~10 min</div><div class="fkh">Write a custom exporter</div><p class="fkp">Subclass <code class="ic">BaseExporter</code> in <code class="ic">sdk/ai_obs/exporters/</code>. Implement one method: <code class="ic">export(self, events)</code>. Register it. Every batch flows to your system.</p><div class="fkt">registry.register(MyExporter())</div></div>
+    <div class="fk"><div class="fkn">~20 min</div><div class="fkh">Add a Grafana panel</div><p class="fkp">Drop a new panel into any JSON file in <code class="ic">dashboard/provisioning/dashboards/</code>. Grafana hot-reloads provisioned dashboards every 30 seconds — no restart needed.</p><div class="fkt">dashboard/provisioning/dashboards/</div></div>
+    <div class="fk"><div class="fkn">~30 min</div><div class="fkh">New framework integration</div><p class="fkp">Add to <code class="ic">sdk/ai_obs/middleware/</code> following the FastAPI middleware or LangChain callback handler patterns already there. Both are under 120 lines.</p><div class="fkt">sdk/ai_obs/middleware/__init__.py</div></div>
+    <div class="fk"><div class="fkn">~15 min</div><div class="fkh">New collector endpoint</div><p class="fkp">Add a router file in <code class="ic">collector/app/routers/</code> and include it in <code class="ic">main.py</code>. PostgreSQL schema changes go in <code class="ic">storage/migrations/</code> as plain SQL.</p><div class="fkt">collector/app/routers/myfeature.py</div></div>
+    <div class="fk"><div class="fkn">~5 min</div><div class="fkh">Publish your Docker image</div><p class="fkp">The CI pipeline auto-publishes to Docker Hub on every GitHub Release. Set <code class="ic">DOCKERHUB_USERNAME</code> and <code class="ic">DOCKERHUB_TOKEN</code> as repo secrets and push a tag.</p><div class="fkt">.github/workflows/ci.yml</div></div>
+  </div>
+</div>
+</section>
+<hr class="d">
+
+<!-- QUICK START -->
+<section id="quickstart">
+<div class="si">
+  <span class="stag">Quick start</span>
+  <h2 class="sh">Up and running<br>in 60 seconds.</h2>
+  <p class="sp">No account. No credit card. No YAML configuration files. Just Docker and Python.</p>
+  <div class="qs-g fi">
+    <div class="qss"><div class="qsn">Step 1 — Stack</div><div class="qsh">Clone &amp; start</div><code class="qsc">git clone github.com/your-org/ai-obs
+cd ai-obs
+cp .env.example .env
+docker compose up -d</code><p class="qsp">PostgreSQL, Redis, MinIO, Collector and Grafana all start together. Seed data loads automatically so dashboards look populated immediately.</p></div>
+    <div class="qss"><div class="qsn">Step 2 — SDK</div><div class="qsh">Install</div><code class="qsc">pip install ai-obs-sdk
+
+# With provider extras:
+pip install ai-obs-sdk[openai]
+pip install ai-obs-sdk[anthropic]
+pip install ai-obs-sdk[bedrock]</code><p class="qsp">Zero hard dependencies in the core SDK. Provider SDKs are optional extras.</p></div>
+    <div class="qss"><div class="qsn">Step 3 — Code</div><div class="qsh">Add one decorator</div><code class="qsc">from ai_obs import observe
+
+@observe(
+  model="gpt-4o",
+  provider="openai"
+)
+def ask(prompt):
+    ...  # existing code unchanged</code><p class="qsp">Wrap any function. Your existing logic does not change at all.</p></div>
+    <div class="qss"><div class="qsn">Step 4 — View</div><div class="qsh">Open Grafana</div><code class="qsc">open http://localhost:3000
+# Login: admin / admin
+
+# API docs at:
+# http://localhost:8080/docs</code><p class="qsp">Metrics appear within seconds of your first call. Three dashboards ready with no configuration needed.</p></div>
+  </div>
+
+  <!-- ENV var table -->
+  <div class="envbox fi">
+    <div style="font-family:var(--fm);font-size:11px;color:var(--tx3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:18px">All SDK settings via environment variables — sensible defaults, nothing required</div>
+    <pre>
+<span class="ah">AI_OBS_ENDPOINT</span>          <span class="dm">http://localhost:8080   URL of the collector</span>
+<span class="ah">AI_OBS_API_KEY</span>           <span class="dm">(none)                 Set in production for auth</span>
+<span class="ah">AI_OBS_ENV</span>               <span class="dm">production             Tag: production / staging / dev</span>
+<span class="ah">AI_OBS_SAMPLE_RATE</span>       <span class="dm">1.0                    0.1 = capture 10% at high volume</span>
+<span class="ah">AI_OBS_BATCH_SIZE</span>        <span class="dm">50                     Events per HTTP flush</span>
+<span class="ah">AI_OBS_FLUSH_INTERVAL</span>    <span class="dm">5                      Seconds between background flushes</span>
+<span class="ah">AI_OBS_DISABLE</span>           <span class="dm">false                  true = silent in unit tests</span>
+<span class="ah">AI_OBS_CAPTURE_PROMPTS</span>   <span class="dm">false                  Opt-in: store prompt text in DB</span>
+<span class="ah">AI_OBS_CAPTURE_COMPLETIONS</span> <span class="dm">false               Opt-in: store completion text in DB</span>
+    </pre>
+  </div>
+</div>
+</section>
+<hr class="d">
+
+<!-- CTA -->
+<section class="cta">
+  <div class="cta-i">
+    <h2 class="ctah">Stop flying blind.<br><em>Ship with confidence.</em></h2>
+    <p class="ctap">ai-obs is free, open-source, and self-hosted. Your data stays yours. Fork it, extend it, and make it your own.</p>
+    <div class="cta-btns">
+      <a href="https://github.com/your-org/ai-obs" class="bp">Get the code on GitHub →</a>
+      <a href="https://pypi.org/project/ai-obs-sdk/" class="bs">pip install ai-obs-sdk</a>
+    </div>
+    <p style="margin-top:28px;font-size:13px;color:var(--tx3)">MIT License &nbsp;·&nbsp; No account required &nbsp;·&nbsp; Your data never leaves your servers</p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-i">
+    <span class="ftc">© 2025 ai-obs contributors · MIT License</span>
+    <div class="ftl">
+      <a href="https://github.com/your-org/ai-obs">GitHub</a>
+      <a href="https://pypi.org/project/ai-obs-sdk/">PyPI</a>
+      <a href="https://hub.docker.com/r/yourdockerhub/ai-obs-collector">Docker Hub</a>
+      <a href="https://github.com/your-org/ai-obs/blob/main/CONTRIBUTING.md">Contributing</a>
+      <a href="https://github.com/your-org/ai-obs/blob/main/CHANGELOG.md">Changelog</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+function tab(btn, id) {
+  document.querySelectorAll('.ctab').forEach(b => b.classList.remove('on'));
+  document.querySelectorAll('.cpanel').forEach(p => p.classList.remove('on'));
+  btn.classList.add('on');
+  document.getElementById(id).classList.add('on');
+}
+const io = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting){e.target.classList.add('vis');io.unobserve(e.target)} }), {threshold:.1});
+document.querySelectorAll('.fi').forEach(el => io.observe(el));
+function makeBars(id, colors, heights) {
+  const el = document.getElementById(id); if(!el) return;
+  heights.forEach((h,i) => {
+    const b = document.createElement('div');
+    b.className = 'dbar';
+    b.style.height = h + '%';
+    b.style.background = colors[i % colors.length];
+    b.style.opacity = .72;
+    el.appendChild(b);
+  });
+}
+const h1 = [35,42,38,55,48,60,52,70,65,75,68,80,72,85,78,88,82,90,85,92,88,95,90,86];
+makeBars('ch1',['#60b0f0','#c8f135','#7df3c8','#f3a447','#b06ef0'],h1);
+const h2 = [30,32,35,28,40,45,38,50,48,55,52,60,58,65,62,70,68,65,72,75,70,68,65,70];
+const el2 = document.getElementById('ch2');
+if(el2) h2.forEach((h,i) => {
+  const g = document.createElement('div');
+  g.style.cssText = 'flex:1;display:flex;align-items:flex-end;gap:1px;height:100%';
+  [[h,'#7df3c8',.8],[Math.min(100,h*1.6),'#f3a447',.6],[Math.min(100,h*2.2),'#f06060',.4]].forEach(([bh,col,op]) => {
+    const b = document.createElement('div');
+    b.style.cssText = `flex:1;height:${bh}%;background:${col};opacity:${op};border-radius:2px 2px 0 0`;
+    g.appendChild(b);
+  });
+  el2.appendChild(g);
+});
+</script>
+
+</body>
+</html>

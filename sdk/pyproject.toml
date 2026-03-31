@@ -1,0 +1,91 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "ai-obs-sdk"
+version = "0.3.0"
+description = "One decorator. Any LLM. Full AI observability — latency, tokens, cost, accuracy."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.9"
+keywords = ["llm", "observability", "monitoring", "ai", "mlops", "metrics", "openai", "anthropic", "bedrock", "gemini", "mistral", "cohere", "deepseek", "prometheus", "opentelemetry", "elasticsearch", "clickhouse"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Monitoring",
+]
+
+# Zero hard dependencies — works with stdlib only.
+# Provider SDKs are all optional extras.
+dependencies = []
+
+[project.optional-dependencies]
+openai       = ["openai>=1.0"]
+anthropic    = ["anthropic>=0.20"]
+bedrock      = ["boto3>=1.28"]
+huggingface  = ["huggingface_hub>=0.20"]
+fastapi      = ["starlette>=0.27"]
+langchain    = ["langchain-core>=0.1"]
+s3           = ["boto3>=1.28"]
+datadog      = []   # no extra deps — uses stdlib urllib
+# New providers (v0.3)
+gemini       = ["google-generativeai>=0.5"]
+mistral      = ["mistralai>=1.0"]
+cohere       = ["cohere>=5.0"]
+azure        = ["openai>=1.20"]
+qwen         = ["dashscope>=1.14"]
+# New exporters (v0.3)
+prometheus   = ["prometheus-client>=0.17"]
+otel         = ["opentelemetry-sdk>=1.20", "opentelemetry-exporter-otlp>=1.20"]
+mlflow       = ["mlflow>=2.0"]
+all          = [
+    "openai>=1.0",
+    "anthropic>=0.20",
+    "boto3>=1.28",
+    "huggingface_hub>=0.20",
+    "starlette>=0.27",
+    "langchain-core>=0.1",
+    "google-generativeai>=0.5",
+    "mistralai>=1.0",
+    "cohere>=5.0",
+    "dashscope>=1.14",
+    "prometheus-client>=0.17",
+    "opentelemetry-sdk>=1.20",
+    "opentelemetry-exporter-otlp>=1.20",
+    "mlflow>=2.0",
+]
+dev          = [
+    "pytest>=7",
+    "pytest-asyncio>=0.21",
+    "httpx>=0.25",
+    "respx>=0.20",
+    "ruff>=0.4",
+    "openai>=1.0",
+    "anthropic>=0.20",
+]
+
+[project.urls]
+Homepage    = "https://github.com/your-org/ai-obs"
+Repository  = "https://github.com/your-org/ai-obs"
+Issues      = "https://github.com/your-org/ai-obs/issues"
+Changelog   = "https://github.com/your-org/ai-obs/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ai_obs*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
