@@ -21,7 +21,7 @@ services:
       context: ./collector
       dockerfile: Dockerfile
       target: runtime
-    image: ${DOCKER_IMAGE:-yourdockerhub/ai-obs-collector}:${VERSION:-latest}
+    image: ${DOCKER_IMAGE:-jahnavik186/telemetryai-collector}:${VERSION:-latest}
     container_name: ai-obs-collector
     restart: unless-stopped
     ports:
