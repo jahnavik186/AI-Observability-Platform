@@ -1,5 +1,5 @@
 # ── Stage 1: build deps ───────────────────────────────────────────────────────
-FROM python:3.12.13-slim-bookworm AS builder
+FROM python:3.14.3-slim-bookworm AS builder
 
 WORKDIR /build
 
@@ -12,7 +12,7 @@ RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 
 # ── Stage 2: runtime ──────────────────────────────────────────────────────────
-FROM python:3.12.13-slim-bookworm AS runtime
+FROM python:3.14.3-slim-bookworm AS runtime
 
 LABEL org.opencontainers.image.title="ai-obs-collector"
 LABEL org.opencontainers.image.description="Telemetry collector for the ai-obs AI observability platform"
