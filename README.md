@@ -9,6 +9,8 @@
 [![CI](https://github.com/your-org/ai-obs/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/ai-obs/actions)
 [![PyPI](https://img.shields.io/pypi/v/ai-obs-sdk)](https://pypi.org/project/ai-obs-sdk/)
 
+[![Docker Pulls](https://img.shields.io/docker/pulls/jahnavik186/ai-observability-platform?style=for-the-badge&logo=docker)](https://hub.docker.com/r/jahnavik186/ai-observability-platform)
+
 `ai-obs` is an open-source, self-hosted observability stack for AI applications.
 It helps developers and teams answer a few practical questions:
 
