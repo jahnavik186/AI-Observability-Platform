@@ -1,4 +1,4 @@
-# ai-obs - Open AI Observability Platform
+# AI Observability Platform
 
 > One decorator. Any LLM. Full visibility.
 > Self-hosted, provider-agnostic, and reusable in your own apps.
