@@ -6,10 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue)](https://python.org)
 [![Docker](https://img.shields.io/badge/docker-compose-blue)](https://docker.com)
-[![CI](https://github.com/your-org/ai-obs/actions/workflows/ci.yml/badge.svg)](https://github.com/your-org/ai-obs/actions)
-[![PyPI](https://img.shields.io/pypi/v/ai-obs-sdk)](https://pypi.org/project/ai-obs-sdk/)
-
-[![Docker Pulls](https://img.shields.io/docker/pulls/jahnavik186/ai-observability-platform?style=for-the-badge&logo=docker)](https://hub.docker.com/r/jahnavik186/ai-observability-platform)
+[![CI](https://github.com/jahnavik186/AI-Observability-Platform/actions/workflows/ci.yml/badge.svg)](https://github.com/jahnavik186/AI-Observability-Platform/actions)
 
 `ai-obs` is an open-source, self-hosted observability stack for AI applications.
 It helps developers and teams answer a few practical questions:
@@ -55,6 +52,22 @@ This repo is useful for:
 - teams building chatbots, agents, RAG apps, and internal AI tools
 - platform engineers who want a reusable observability foundation
 - companies that need telemetry to stay inside their own infrastructure
+
+---
+
+## Industry Use Cases
+
+`ai-obs` is intentionally domain-neutral. Any team calling an LLM can use the same
+trace, cost, latency, error, and quality signals.
+
+| Industry | Practical impact |
+|---|---|
+| Healthcare | Monitor private assistants while keeping prompt and completion capture disabled by default |
+| Finance | Track cost, latency, failures, and quality for regulated internal workflows |
+| Legal | Audit answer quality and model behavior without sending telemetry to a third-party SaaS |
+| Education | Measure tutoring assistant accuracy, latency, and cost across courses or cohorts |
+| Retail and support | Monitor customer-support bots by endpoint, model, error rate, and satisfaction score |
+| SaaS platforms | Compare providers and models before rolling AI features out to customers |
 
 ---
 
@@ -134,8 +147,8 @@ That means faster:
 ## 60-Second Quick Start
 
 ```bash
-git clone https://github.com/your-org/ai-obs.git
-cd ai-obs
+git clone https://github.com/jahnavik186/AI-Observability-Platform.git
+cd AI-Observability-Platform
 cp .env.example .env
 docker compose up -d
 ```
@@ -148,7 +161,7 @@ Open:
 Install the SDK:
 
 ```bash
-pip install ai-obs-sdk
+pip install -e ./sdk
 ```
 
 Wrap an existing model call:
@@ -312,6 +325,19 @@ All config is environment-driven.
 | `AI_OBS_CAPTURE_COMPLETIONS` | `false` | Capture completion text |
 | `AI_OBS_TIMEOUT` | `5` | Collector HTTP timeout in seconds |
 
+See [Privacy and Security](docs/PRIVACY_AND_SECURITY.md) before enabling prompt
+or completion capture in production.
+
+---
+
+## Project Links
+
+- [Privacy and Security](docs/PRIVACY_AND_SECURITY.md)
+- [Industry Adoption Guide](docs/INDUSTRY_ADOPTION.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security Policy](SECURITY.md)
+
 ---
 
 ## Architecture Notes
@@ -376,14 +402,9 @@ Team uses that data to debug, compare models, and improve quality
 
 ---
 
-## Roadmap Ideas
+## Roadmap
 
-- JavaScript and TypeScript SDK
-- better prompt and completion redaction
-- built-in alerting rules
-- Kubernetes deployment support
-- more provider integrations
-- more exporters and storage backends
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the adoption-focused roadmap.
 
 ---
 

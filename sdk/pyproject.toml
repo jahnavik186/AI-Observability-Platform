@@ -73,10 +73,10 @@ dev          = [
 ]
 
 [project.urls]
-Homepage    = "https://github.com/your-org/ai-obs"
-Repository  = "https://github.com/your-org/ai-obs"
-Issues      = "https://github.com/your-org/ai-obs/issues"
-Changelog   = "https://github.com/your-org/ai-obs/blob/main/CHANGELOG.md"
+Homepage    = "https://github.com/jahnavik186/AI-Observability-Platform"
+Repository  = "https://github.com/jahnavik186/AI-Observability-Platform"
+Issues      = "https://github.com/jahnavik186/AI-Observability-Platform/issues"
+Changelog   = "https://github.com/jahnavik186/AI-Observability-Platform/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["."]

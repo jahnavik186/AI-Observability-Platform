@@ -8,8 +8,8 @@ Here's how to get started.
 ## Development setup
 
 ```bash
-git clone https://github.com/your-org/ai-obs.git
-cd ai-obs
+git clone https://github.com/jahnavik186/AI-Observability-Platform.git
+cd AI-Observability-Platform
 
 # Full stack
 cp .env.example .env

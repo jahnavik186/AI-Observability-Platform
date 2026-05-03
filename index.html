@@ -214,7 +214,7 @@ footer{border-top:1px solid var(--bd);padding:36px 32px}
       <li><a href="#features">Features</a></li>
       <li><a href="#usecases">Use cases</a></li>
       <li><a href="#quickstart">Quick start</a></li>
-      <li><a href="https://github.com/your-org/ai-obs" class="ncta">GitHub ↗</a></li>
+      <li><a href="https://github.com/jahnavik186/AI-Observability-Platform" class="ncta">GitHub ↗</a></li>
     </ul>
   </div>
 </nav>
@@ -226,7 +226,7 @@ footer{border-top:1px solid var(--bd);padding:36px 32px}
   <p class="hero-sub">One Python decorator instruments any LLM. Track latency, cost, accuracy and errors across OpenAI, Anthropic, AWS Bedrock, HuggingFace and any HTTP model. Your data never leaves your servers.</p>
   <div class="hbtns">
     <a href="#quickstart" class="bp">Get started free →</a>
-    <a href="https://github.com/your-org/ai-obs" class="bs">⭐ Star on GitHub</a>
+    <a href="https://github.com/jahnavik186/AI-Observability-Platform" class="bs">⭐ Star on GitHub</a>
   </div>
   <div class="term">
     <div class="tbar">
@@ -307,7 +307,7 @@ client <span class="op">=</span> OpenAI()
     <pre>
 <span class="ah">Your AI App</span>  <span class="dm">(OpenAI · Anthropic · AWS Bedrock · HuggingFace · Ollama · any HTTP model)</span>
       │
-      │  <span class="ah2">ai-obs-sdk</span>  <span class="dm">pip install ai-obs-sdk</span>
+      │  <span class="ah2">ai-obs-sdk</span>  <span class="dm">pip install -e ./sdk</span>
       │  <span class="dm">── @observe decorator  /  FastAPI middleware  /  LangChain callback ──────</span>
       │  <span class="dm">── events queued in background thread, flushed every 5 s, zero latency ───</span>
       ▼
@@ -670,16 +670,16 @@ registry.register(ClickHouseExporter())
   <h2 class="sh">Up and running<br>in 60 seconds.</h2>
   <p class="sp">No account. No credit card. No YAML configuration files. Just Docker and Python.</p>
   <div class="qs-g fi">
-    <div class="qss"><div class="qsn">Step 1 — Stack</div><div class="qsh">Clone &amp; start</div><code class="qsc">git clone github.com/your-org/ai-obs
-cd ai-obs
+    <div class="qss"><div class="qsn">Step 1 — Stack</div><div class="qsh">Clone &amp; start</div><code class="qsc">git clone github.com/jahnavik186/AI-Observability-Platform
+cd AI-Observability-Platform
 cp .env.example .env
 docker compose up -d</code><p class="qsp">PostgreSQL, Redis, MinIO, Collector and Grafana all start together. Seed data loads automatically so dashboards look populated immediately.</p></div>
-    <div class="qss"><div class="qsn">Step 2 — SDK</div><div class="qsh">Install</div><code class="qsc">pip install ai-obs-sdk
+    <div class="qss"><div class="qsn">Step 2 — SDK</div><div class="qsh">Install</div><code class="qsc">pip install -e ./sdk
 
 # With provider extras:
-pip install ai-obs-sdk[openai]
-pip install ai-obs-sdk[anthropic]
-pip install ai-obs-sdk[bedrock]</code><p class="qsp">Zero hard dependencies in the core SDK. Provider SDKs are optional extras.</p></div>
+pip install -e ./sdk[openai]
+pip install -e ./sdk[anthropic]
+pip install -e ./sdk[bedrock]</code><p class="qsp">Zero hard dependencies in the core SDK. Provider SDKs are optional extras.</p></div>
     <div class="qss"><div class="qsn">Step 3 — Code</div><div class="qsh">Add one decorator</div><code class="qsc">from ai_obs import observe
 
 @observe(
@@ -720,8 +720,8 @@ def ask(prompt):
     <h2 class="ctah">Stop flying blind.<br><em>Ship with confidence.</em></h2>
     <p class="ctap">ai-obs is free, open-source, and self-hosted. Your data stays yours. Fork it, extend it, and make it your own.</p>
     <div class="cta-btns">
-      <a href="https://github.com/your-org/ai-obs" class="bp">Get the code on GitHub →</a>
-      <a href="https://pypi.org/project/ai-obs-sdk/" class="bs">pip install ai-obs-sdk</a>
+      <a href="https://github.com/jahnavik186/AI-Observability-Platform" class="bp">Get the code on GitHub →</a>
+      <a href="#quickstart" class="bs">Install locally</a>
     </div>
     <p style="margin-top:28px;font-size:13px;color:var(--tx3)">MIT License &nbsp;·&nbsp; No account required &nbsp;·&nbsp; Your data never leaves your servers</p>
   </div>
@@ -732,11 +732,11 @@ def ask(prompt):
   <div class="ft-i">
     <span class="ftc">© 2025 ai-obs contributors · MIT License</span>
     <div class="ftl">
-      <a href="https://github.com/your-org/ai-obs">GitHub</a>
-      <a href="https://pypi.org/project/ai-obs-sdk/">PyPI</a>
-      <a href="https://hub.docker.com/r/yourdockerhub/ai-obs-collector">Docker Hub</a>
-      <a href="https://github.com/your-org/ai-obs/blob/main/CONTRIBUTING.md">Contributing</a>
-      <a href="https://github.com/your-org/ai-obs/blob/main/CHANGELOG.md">Changelog</a>
+      <a href="https://github.com/jahnavik186/AI-Observability-Platform">GitHub</a>
+      <a href="https://github.com/jahnavik186/AI-Observability-Platform/releases">Releases</a>
+      <a href="https://github.com/jahnavik186/AI-Observability-Platform/actions">CI</a>
+      <a href="https://github.com/jahnavik186/AI-Observability-Platform/blob/main/CONTRIBUTING.md">Contributing</a>
+      <a href="https://github.com/jahnavik186/AI-Observability-Platform/blob/main/CHANGELOG.md">Changelog</a>
     </div>
   </div>
 </footer>
